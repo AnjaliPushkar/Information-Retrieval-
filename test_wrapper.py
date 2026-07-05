@@ -1,19 +1,54 @@
-# Information Retrieval - Practical Task 2
-# Wrapper for Unit Tests
-# Version 1.1 (2025-06-04)
-
 from document import Document
 from re import Pattern
 
 
+# ----------------
+# PR03 — Stemming
+# ---------
+def stem_term(term: str) -> str:
+    """
+    Stem a single term using the Porter stemming algorithm.
+    Returns the stemmed string (always lowercase).
+
+    Called directly by test_pr03_t1:
+        stemmed_term = stem_term('koala')
+    """
+    from stemmer import stem_term as _stem
+    return _stem(term)
+
+
+# ------
+# PR02 — Boolean search (extended with stemmed parameter for PR03)
+# -------------------
+def linear_boolean_search(
+    term: str,
+    collection: list[Document],
+    stopword_filtered: bool = False,
+    stemmed: bool = False,
+) -> list[tuple[int, Document]]:
+    """
+    Search collection for documents containing term.
+    Returns list of (score, Document) — score 1 = match, 0 = no match.
+    Matching documents appear first.
+
+    Parameters
+    ----------
+    stopword_filtered : If True, searches doc._filtered_terms.
+    stemmed           : If True, stems both query and document terms
+                        before matching (Porter algorithm).
+    """
+    from search import linear_boolean_search as _search
+    return _search(term, collection, stopword_filtered, stemmed)
+
+
+# ----
+# PR02 — Stop word removal
+# ---------------
+
 def remove_stopwords_by_list(doc: Document, stopwords: set[str]):
     """
-    Remove stopwords from the given document and store result in doc._filtered_terms.
-
-    - Filters doc.terms against the provided stopword set (case-insensitive).
-    - Output terms are lowercased.
-    - Leaves doc.terms and doc.raw_text unchanged.
-    - Access result via doc.filtered_terms()  (method call).
+    Filter doc.terms against stopwords and store in doc._filtered_terms.
+    Access result via doc.filtered_terms().
     """
     from stopwords import remove_stop_words
     doc._filtered_terms = remove_stop_words(doc.terms, stopwords)
@@ -26,20 +61,24 @@ def remove_stopwords_by_frequency(
     rare_frequency: float,
 ):
     """
-    Remove stopwords using Crouch's frequency-percentile method.
+    Crouch frequency-based stop word removal.
     Stores result in doc._filtered_terms (access via doc.filtered_terms()).
 
-    common_frequency : upper percentile — terms at/above this are too common.
-    rare_frequency   : lower percentile — terms at/below this are too rare.
+    common_frequency : upper percentile — too common → stop word.
+    rare_frequency   : lower percentile — too rare   → stop word.
     """
     from stopwords import remove_stop_words_by_frequency
     doc._filtered_terms = remove_stop_words_by_frequency(
         doc.terms,
         collection,
-        low_freq=rare_frequency,       # rare_frequency  → lower cut-off
-        high_freq=common_frequency,    # common_frequency → upper cut-off
+        low_freq=rare_frequency,
+        high_freq=common_frequency,
     )
 
+
+# ---------
+# PR02 — Document loading
+# ----
 
 def load_documents_from_url(
     url: str,
@@ -56,25 +95,5 @@ def load_documents_from_url(
     """
     from parser import load_collection_from_url
     return load_collection_from_url(
-        url,
-        search_pattern,
-        start_line,
-        end_line,
-        author,
-        origin,
+        url, search_pattern, start_line, end_line, author, origin,
     )
-
-
-def linear_boolean_search(
-    term: str,
-    collection: list[Document],
-    stopword_filtered: bool = False,
-) -> list[tuple[int, Document]]:
-    """
-    Search collection for documents containing term.
-    Returns list of (score, Document) — score 1 = match, 0 = no match.
-    Matching documents appear first.
-    If stopword_filtered=True, searches doc._filtered_terms instead of doc.terms.
-    """
-    from search import linear_boolean_search as _search
-    return _search(term, collection, stopword_filtered)

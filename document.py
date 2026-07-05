@@ -1,19 +1,3 @@
-"""
-document.py
-Defines the Document dataclass used throughout the IR system.
-
-filtered_terms dual interface explanation:
-  test_pr02_t3 assigns it as a plain attribute:  d1.filtered_terms = [...]
-  test_pr02_t4 calls it as a method:             doc.filtered_terms()
-
-  Solution: use a @property.
-    - The setter stores the value in _filtered_terms.
-    - The getter returns a _CallableList (a list that is also callable),
-      so both  doc.filtered_terms  (returns list)  and
-               doc.filtered_terms()  (calls the list → returns list)  work.
-    - Pylance sees a normal property, so assignment is valid and no warning.
-"""
-
 from dataclasses import dataclass, field
 
 
@@ -30,8 +14,6 @@ class _CallableList(list):
 
 @dataclass
 class Document:
-    """A single story/chapter extracted from a text collection."""
-
     document_id: int
     title: str
     raw_text: str
@@ -52,8 +34,7 @@ class Document:
         if not isinstance(self._filtered_terms, _CallableList):
             # Ensure it's always a _CallableList even if set via _filtered_terms directly
             object.__setattr__(self, "_filtered_terms", _CallableList(self._filtered_terms))
-        return self._filtered_terms   # type: ignore[return-value]
-
+        return self._filtered_terms
     @filtered_terms.setter
     def filtered_terms(self, value: list) -> None:
         """
